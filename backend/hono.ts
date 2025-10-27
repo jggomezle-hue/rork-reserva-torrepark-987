@@ -16,11 +16,12 @@ app.use("*", cors({
 const bookingSchema = z.object({
   date: z.string(),
   time: z.string(),
-  numberOfKids: z.number(),
-  parentName: z.string(),
+  numberOfChildren: z.number(),
+  customerName: z.string(),
   email: z.string().email(),
   phone: z.string(),
-  notes: z.string().optional(),
+  childrenAges: z.string().optional(),
+  specialRequests: z.string().optional(),
 });
 
 app.get("/", (c) => {

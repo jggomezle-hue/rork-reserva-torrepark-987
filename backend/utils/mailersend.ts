@@ -11,7 +11,24 @@ export interface BookingData {
   specialRequests?: string;
 }
 
-export function buildMailerSendPayload(booking: BookingData) {
+export interface BookingEmailData {
+  date: string;
+  time: string;
+  numberOfKids?: number;
+  numberOfChildren?: number;
+  parentName?: string;
+  customerName?: string;
+  email: string;
+  phone: string;
+  childrenAges?: string;
+  notes?: string;
+  specialRequests?: string;
+}
+
+export function buildMailerSendPayload(booking: BookingData | BookingEmailData) {
+  const numberOfChildren = 'numberOfChildren' in booking ? booking.numberOfChildren : booking.numberOfKids || 0;
+  const customerName = 'customerName' in booking ? booking.customerName : booking.parentName || '';
+  const specialRequests = 'specialRequests' in booking ? booking.specialRequests : booking.notes;
   return {
     from: {
       email: MAILERSEND_CONFIG.fromEmail,
@@ -39,11 +56,11 @@ export function buildMailerSendPayload(booking: BookingData) {
           },
           {
             var: 'number_of_kids',
-            value: booking.numberOfChildren.toString(),
+            value: numberOfChildren.toString(),
           },
           {
             var: 'parent_name',
-            value: booking.customerName,
+            value: customerName,
           },
           {
             var: 'parent_email',
@@ -59,7 +76,7 @@ export function buildMailerSendPayload(booking: BookingData) {
           },
           {
             var: 'notes',
-            value: booking.specialRequests || 'Ninguna',
+            value: specialRequests || 'Ninguna',
           },
         ],
       },

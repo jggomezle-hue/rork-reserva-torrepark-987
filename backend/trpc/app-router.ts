@@ -9,6 +9,9 @@ export const appRouter = createTRPCRouter({
   booking: createTRPCRouter({
     sendEmail: sendEmailRoute,
   }),
+  bookings: createTRPCRouter({
+    sendConfirmation: sendEmailRoute,
+  }),
 });
 
 export type AppRouter = typeof appRouter;
