@@ -13,12 +13,11 @@ async function testEmail() {
   const testBooking = {
     date: '15/01/2025',
     time: '10:00',
-    numberOfChildren: 2,
-    customerName: 'Juan Pérez',
+    numberOfKids: 2,
+    parentName: 'Juan Pérez',
     email: 'admin@torrepark.com',
     phone: '+34 600 123 456',
-    childrenAges: '5, 7',
-    specialRequests: 'Esta es una prueba del sistema de emails',
+    notes: 'Esta es una prueba del sistema de emails',
   };
 
   console.log('📋 Datos de prueba:');
