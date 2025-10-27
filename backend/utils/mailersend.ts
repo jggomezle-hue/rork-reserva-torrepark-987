@@ -3,11 +3,12 @@ import { MAILERSEND_CONFIG } from '../../constants/emailConfig';
 export interface BookingData {
   date: string;
   time: string;
-  numberOfKids: number;
-  parentName: string;
+  numberOfChildren: number;
+  customerName: string;
   email: string;
   phone: string;
-  notes?: string;
+  childrenAges?: string;
+  specialRequests?: string;
 }
 
 export function buildMailerSendPayload(booking: BookingData) {
@@ -38,11 +39,11 @@ export function buildMailerSendPayload(booking: BookingData) {
           },
           {
             var: 'number_of_kids',
-            value: booking.numberOfKids.toString(),
+            value: booking.numberOfChildren.toString(),
           },
           {
             var: 'parent_name',
-            value: booking.parentName,
+            value: booking.customerName,
           },
           {
             var: 'parent_email',
@@ -53,8 +54,12 @@ export function buildMailerSendPayload(booking: BookingData) {
             value: booking.phone,
           },
           {
+            var: 'children_ages',
+            value: booking.childrenAges || 'No especificado',
+          },
+          {
             var: 'notes',
-            value: booking.notes || 'Ninguna',
+            value: booking.specialRequests || 'Ninguna',
           },
         ],
       },
