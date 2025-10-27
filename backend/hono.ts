@@ -39,19 +39,18 @@ app.post("/api/booking/send-email", async (c) => {
     const result = await sendBookingEmail(validatedData);
     
     return c.json(result);
-  } catch (error) {
-    console.error('❌ Error en endpoint de email:', error);
+  } catch (error: any) {
+    console.error('❌ Error en el endpoint:', error);
     return c.json({ 
       success: false, 
-      error: error instanceof Error ? error.message : 'Error desconocido' 
+      error: error.message || 'Error desconocido' 
     }, 500);
   }
 });
 
 app.use(
-  "/trpc/*",
+  "/api/trpc/*",
   trpcServer({
-    endpoint: "/api/trpc",
     router: appRouter,
     createContext,
   })
