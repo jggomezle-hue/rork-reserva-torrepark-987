@@ -1,0 +1,4 @@
+run = "bun run backend/start-server.ts"
+
+[deployment]
+run = ["bun", "run", "backend/start-server.ts"]
