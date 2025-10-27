@@ -37,7 +37,7 @@ app.post("/api/booking/send-email", async (c) => {
     const validatedData = bookingSchema.parse(body);
     
     const { sendBookingEmail } = await import('./utils/mailersend');
-    const result = await sendBookingEmail(validatedData);
+    const result = await sendBookingEmail(validatedData as any);
     
     return c.json(result);
   } catch (error: any) {
