@@ -1,111 +1,99 @@
-import { z } from "zod";
+import { MAILERSEND_CONFIG } from '../../constants/emailConfig';
 
-const MAILERSEND_API_KEY = process.env.MAILERSEND_API_TOKEN || process.env.MAILERSEND_API_KEY || "";
-const DOMAIN_ID = "test-pzkmgq7x6v2l059v.mlsender.net";
-const TEMPLATE_ID = "jpzkmgqyj5ml059v";
-
-if (!MAILERSEND_API_KEY) {
-  console.error("⚠️ MAILERSEND_API_TOKEN no está configurado!");
+export interface BookingData {
+  date: string;
+  time: string;
+  numberOfKids: number;
+  parentName: string;
+  email: string;
+  phone: string;
+  notes?: string;
 }
 
-console.log("📧 MailerSend Config:", {
-  apiKeyPresent: !!MAILERSEND_API_KEY,
-  apiKeyLength: MAILERSEND_API_KEY?.length,
-  apiKeyPrefix: MAILERSEND_API_KEY?.substring(0, 10),
-  domain: DOMAIN_ID,
-  template: TEMPLATE_ID,
-});
-
-export const BookingDataSchema = z.object({
-  date: z.string(),
-  time: z.string(),
-  numberOfKids: z.number(),
-  parentName: z.string(),
-  email: z.string().email(),
-  phone: z.string(),
-  notes: z.string().optional(),
-});
-
-export type BookingData = z.infer<typeof BookingDataSchema>;
-
-export async function sendBookingEmail(bookingData: BookingData) {
-  console.log("📧 Enviando email de confirmación a:", bookingData.email);
-  console.log("🔑 Usando API Key:", MAILERSEND_API_KEY ? `${MAILERSEND_API_KEY.substring(0, 10)}...` : "FALTA");
-
-  if (!MAILERSEND_API_KEY) {
-    throw new Error("MAILERSEND_API_TOKEN no está configurado en las variables de entorno");
-  }
-
-  try {
-    const response = await fetch("https://api.mailersend.com/v1/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${MAILERSEND_API_KEY}`,
+export function buildMailerSendPayload(booking: BookingData) {
+  return {
+    from: {
+      email: MAILERSEND_CONFIG.fromEmail,
+      name: MAILERSEND_CONFIG.fromName,
+    },
+    to: [
+      {
+        email: MAILERSEND_CONFIG.recipientEmail,
+        name: 'TORREPARK Admin',
       },
-      body: JSON.stringify({
-        from: {
-          email: `noreply@${DOMAIN_ID}`,
-          name: "TorrePark",
-        },
-        to: [
+    ],
+    subject: `Nueva Reserva - TORREPARK - ${booking.date}`,
+    template_id: MAILERSEND_CONFIG.templateId,
+    variables: [
+      {
+        email: MAILERSEND_CONFIG.recipientEmail,
+        substitutions: [
           {
-            email: bookingData.email,
-            name: bookingData.parentName,
+            var: 'booking_date',
+            value: booking.date,
+          },
+          {
+            var: 'booking_time',
+            value: booking.time,
+          },
+          {
+            var: 'number_of_kids',
+            value: booking.numberOfKids.toString(),
+          },
+          {
+            var: 'parent_name',
+            value: booking.parentName,
+          },
+          {
+            var: 'parent_email',
+            value: booking.email,
+          },
+          {
+            var: 'parent_phone',
+            value: booking.phone,
+          },
+          {
+            var: 'notes',
+            value: booking.notes || 'Ninguna',
           },
         ],
-        template_id: TEMPLATE_ID,
-        variables: [
-          {
-            email: bookingData.email,
-            substitutions: [
-              {
-                var: "customer_name",
-                value: bookingData.parentName,
-              },
-              {
-                var: "booking_date",
-                value: bookingData.date,
-              },
-              {
-                var: "booking_time",
-                value: bookingData.time,
-              },
-              {
-                var: "number_of_children",
-                value: bookingData.numberOfKids.toString(),
-              },
-              {
-                var: "phone",
-                value: bookingData.phone,
-              },
-              {
-                var: "special_requests",
-                value: bookingData.notes || "Ninguna",
-              },
-            ],
-          },
-        ],
-      }),
-    });
+      },
+    ],
+  };
+}
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Error de API MailerSend:", errorText);
-      throw new Error(`Failed to send email: ${response.status} ${errorText}`);
-    }
+export async function sendBookingEmail(booking: BookingData) {
+  const apiToken = process.env.MAILERSEND_API_TOKEN;
 
-    const result = await response.json();
-    console.log("✅ Email enviado exitosamente:", result);
-
-    return {
-      success: true,
-      message: "Email de confirmación enviado correctamente",
-    };
-  } catch (error) {
-    console.error("❌ Error enviando email:", error);
-    throw new Error(
-      error instanceof Error ? error.message : "Error al enviar el email"
-    );
+  if (!apiToken) {
+    throw new Error('MAILERSEND_API_TOKEN no está configurado');
   }
+
+  const emailData = buildMailerSendPayload(booking);
+
+  console.log('📧 Enviando email con MailerSend...');
+  console.log('📋 Template ID:', MAILERSEND_CONFIG.templateId);
+
+  const response = await fetch('https://api.mailersend.com/v1/email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiToken}`,
+    },
+    body: JSON.stringify(emailData),
+  });
+
+  console.log('📬 Respuesta de MailerSend:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Error de MailerSend:', errorText);
+    throw new Error(`MailerSend error: ${response.status} - ${errorText}`);
+  }
+
+  const responseText = await response.text();
+  console.log('✅ Email enviado correctamente con MailerSend');
+  console.log('📬 Respuesta:', responseText);
+
+  return { success: true, message: 'Email enviado correctamente' };
 }
